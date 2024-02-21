@@ -1,0 +1,63 @@
+#Python code
+
+import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Read the dataset
+uber_data = pd.read_csv("uber-raw-data-sep14.csv")
+# Display the first few rows of the dataset
+print(uber_data.head())
+# Identify peak ride hours
+uber_data['Date/Time'] = pd.to_datetime(uber_data['Date/Time'])
+uber_data['Hour'] = uber_data['Date/Time'].dt.hour
+peak_hours = uber_data['Hour'].value_counts().sort_index()
+print("Peak Ride Hours:")
+print(peak_hours)
+print()
+# Identify popular pickup locations
+popular_locations = uber_data.groupby(['Lat', 'Lon']).size().nlargest(10)
+print("Popular Pickup Locations:")
+print(popular_locations)
+print()
+# Distribution of ride durations
+# Assuming ride duration can be calculated from timestamps
+uber_data['Timestamp'] = uber_data['Date/Time'].apply(lambda x: x.timestamp())
+uber_data['Ride Duration'] = uber_data.groupby('Date/Time')['Timestamp'].transform(lambda x: x.max() - x.min())
+print("Distribution of Ride Durations:")
+print(uber_data['Ride Duration'].describe())
+# Correlation between time of day and number of rides
+hourly_ride_counts = uber_data.groupby('Hour').size()
+print("Correlation between Time of Day and Number of Rides:")
+print(hourly_ride_counts.corr(pd.Series(hourly_ride_counts.index)))
+# Correlation between location and ride demand
+location_ride_counts = uber_data.groupby(['Lat', 'Lon']).size().reset_index()
+print("Correlation between Location and Ride Demand:")
+print(location_ride_counts.corr())
+# Visualize peak ride hours
+plt.figure(figsize=(10, 6))
+plt.plot(peak_hours.index, peak_hours.values, marker='o', linestyle='-')
+plt.title("Peak Ride Hours")
+plt.xlabel("Hour of Day")
+plt.ylabel("Number of Rides")
+plt.grid(True)
+plt.show()
+# Create pairplot of ride duration vs. hour
+sns.pairplot(data=uber_data, vars=['Hour', 'Ride Duration'], diag_kind='kde', kind='scatter')
+plt.title('Pairplot of Ride Duration vs. Hour')
+plt.show()
+plt.figure(figsize=(12, 6))
+# Convert 'Date/Time' column to datetime data type
+uber_data['Date/Time'] = pd.to_datetime(uber_data['Date/Time'])
+# Retrieve hour and day of the week
+uber_data['Hour'] = uber_data['Date/Time'].dt.hour
+uber_data['Day_of_Week'] = uber_data['Date/Time'].dt.dayofweek
+# Display the first few rows to verify the changes
+print(uber_data[['Date/Time', 'Hour', 'Day_of_Week']].head())
+# Example: Plot ride counts by hour
+sns.countplot(data=uber_data, x='Hour', hue='Day_of_Week')
+plt.title('Uber Ride Counts by Hour')
+plt.xlabel('Hour of the Day')
+plt.ylabel('Ride Count')
+plt.legend(title='Day of Week')
+plt.show()
